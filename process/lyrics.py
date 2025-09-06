@@ -1,5 +1,7 @@
 from bs4 import BeautifulSoup, Tag
 
+from process.make_file import is_chord_line
+
 
 def organize_song_lyrics(*lyrics_map) -> list[list]:
     """
@@ -19,31 +21,30 @@ def organize_song_lyrics(*lyrics_map) -> list[list]:
 
     for lyrics in lyrics_map:
         for index, line in enumerate(lyrics):
-            line = line.rstrip()
             stripped_line = line.strip()
 
-            # Check for stanza break (square brackets) or empty line
-            if (stripped_line.startswith('[') and stripped_line.endswith(']')) or not stripped_line:
-                if current_stanza:  # Flush current stanza if not empty
-                    # finish stanza
+            if stripped_line and stripped_line[0] == '[' and stripped_line[
+                -1] == ']':  # search for tags eg: [Primeira Parte]
+                combined_stanzas.append([line.rstrip()])
+                continue
+
+            # Check for stanza break or empty line
+            elif not stripped_line:
+                if analyze_if_ignore_blank_line(lyrics[index - 1], lyrics[index + 1]):
+                    continue
+                if current_stanza:
                     combined_stanzas.append(current_stanza)
                     current_stanza = []
-                elif not stripped_line:
-                    continue
-
-                else:  # Add the bracket line as its own stanza
-                    combined_stanzas.append([line])
+            else:
+                current_stanza.append(line.rstrip())
 
             # if "parte" in stripped_line.lower():   # sometimes a phrase of tabs remains in the html ("Parte 1 de 3") TODO
             #     continue
 
-            else:
-                current_stanza.append(line)
-
         # Add any remaining lines after processing all songs
         if current_stanza:
             combined_stanzas.append(current_stanza)
-            current_stanza = []
+            current_stanza.clear()
 
     return combined_stanzas
 
@@ -67,7 +68,7 @@ def analyze_stanzas(sublists) -> list:
         sublist = sublists[i]
 
         # Check if sublist should be ignored (contains [text]) | e.g. [Primeira Parte]
-        ignore = any(item.startswith('[') and item.endswith(']') for item in sublist)
+        ignore = any(item[0] == '[' and item[-1] == ']' for item in sublist)
         if ignore:
             i += 1
             continue
@@ -108,3 +109,21 @@ def analyze_stanzas(sublists) -> list:
     sequence_ids_stanzas.append(f"{prev}({count}x)" if count > 1 else str(prev))
     id_map = dict(zip(id_map.values(), id_map.keys()))  # switch keys to values
     return [sequence_ids_stanzas, id_map]
+
+
+def analyze_if_ignore_blank_line(prev_line: str, post_line: str):
+    """
+    Analyze if a blank line corresponds to a new stanza, otherwise should be ignored
+    :param prev_line: previous line
+    :param post_line: posterior line
+    :return:
+    """
+    check_line_1 = False
+    check_line_2 = False
+
+    if not is_chord_line(prev_line) and prev_line[0] != '[':
+        check_line_1 = True
+    if not is_chord_line(post_line) and post_line[0] != '[':
+        check_line_2 = True
+
+    return check_line_1 and check_line_2
