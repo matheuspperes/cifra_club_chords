@@ -4,11 +4,11 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-requests = "*"
-bs4 = "*"
-fpdf = "*"
+bs4 = "==0.0.2"
+fpdf = "==1.7.2"
+requests = "==2.32.4"
 
 [dev-packages]
 
 [requires]
-python_version = "3.10"
+python_version = "3.13"
