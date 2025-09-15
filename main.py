@@ -2,6 +2,7 @@ from extraction.website import get_song_html
 from process.lyrics import organize_song_lyrics, parse_chords_and_lyrics, analyze_stanzas, set_stanza_default
 from process.make_file import make_pdf
 from process.similarity import analyze_stanzas_similarity
+from process.stanza_scanning import analyze_repetition
 
 url = "https://www.cifraclub.com.br/fernandinho/nada-alem-do-sangue/"
 
@@ -13,14 +14,16 @@ if __name__ == "__main__":
 
     formatted_lyrics = organize_song_lyrics(song_lines)
 
-    individual_results, groups = analyze_stanzas_similarity(formatted_lyrics)
-    if individual_results and groups:
-        set_stanza_default(groups, formatted_lyrics)
+    filtered_formatted_lyrics = analyze_repetition(formatted_lyrics)
 
-    sequence, id_map = analyze_stanzas(formatted_lyrics)
+    individual_results, groups = analyze_stanzas_similarity(filtered_formatted_lyrics)
+    if individual_results and groups:
+        set_stanza_default(groups, filtered_formatted_lyrics)
+
+    sequence, id_map = analyze_stanzas(filtered_formatted_lyrics)
     print(f"Ordem: {sequence}")
 
-    for i, stanza in enumerate(formatted_lyrics):
+    for i, stanza in enumerate(filtered_formatted_lyrics):
         print(f"Stanza {i + 1}: {stanza}")
 
     make_pdf(song_name, sequence, id_map)

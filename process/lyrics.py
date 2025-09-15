@@ -30,6 +30,8 @@ def organize_song_lyrics(*lyrics_map) -> list[list]:
                 if current_stanza:
                     combined_stanzas.append(current_stanza)
                     current_stanza = []
+            elif "|" in stripped_line:  # sometimes a line from tabs is not deleted
+                continue
             else:
                 current_stanza.append(line.rstrip())
 
@@ -45,7 +47,7 @@ def organize_song_lyrics(*lyrics_map) -> list[list]:
 
 
 def parse_chords_and_lyrics(html: Tag) -> list:
-    """Parse
+    """Split lines from chord
 
     :param html: Chord tag from beautiful soup
     :return: chord with split lines
@@ -58,14 +60,19 @@ def parse_chords_and_lyrics(html: Tag) -> list:
             if lines[index] or index == 0 or lines[index - 1]]
 
 
-def analyze_stanzas(sublists: list) -> list:
+def analyze_stanzas(formatted_lyrics: list) -> list:
+    """Analyzes and make a sequece of stanzas preparing to pdf
+    
+    :param formatted_lyrics: Separated lyrics
+    :return: 
+    """
     ids_stanzas = []
     current_id = 0
     id_map = {}  # To track stanza content and their IDs
 
     i: int = 0
-    while i < len(sublists):
-        sublist = sublists[i]
+    while i < len(formatted_lyrics):
+        sublist = formatted_lyrics[i]
 
         # Check if sublist should be ignored (contains [text]) | e.g. [Primeira Parte]
         ignore = any(item[0] == '[' and item[-1] == ']' for item in sublist)
@@ -139,9 +146,30 @@ def set_stanza_default(groups: list, lyrics: list):
     combo: dict
 
     for combo in groups:
-        default_item = input(f"Qual estrofe será o padrão? Opções: {combo['indexes']}: ")
+        indexes = combo['indexes']
+
+        if input("Deseja printar as opções? vazio=N : "):
+            print_similarity_combos(indexes, lyrics)
+
+        default_item = input(f"Qual estrofe será o padrão? Opções {indexes}") # TODO: grupos 1,2,4
         if not default_item:
-            return
+            continue
 
         # set the default stanza changing the others
         [lyrics.__setitem__(index, lyrics[int(default_item)]) for index in combo['indexes']]
+
+
+def print_similarity_combos(indexes, lyrics: list):
+    selected_stanzas = []
+    for index in indexes:
+        selected_stanzas.append(lyrics[index])
+
+    max_lines = max(len(stanza) for stanza in selected_stanzas)
+
+    organized_lines = []
+    for line_pos in range(max_lines):
+        for stanza in selected_stanzas:
+            if line_pos < len(stanza):
+                print(f"{stanza[line_pos]}")
+
+    return organized_lines

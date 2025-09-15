@@ -20,7 +20,7 @@ def calculate_similarity(stanza1: list, stanza2: list) -> float:
 
 
 def analyze_stanzas_similarity(stanzas: list) -> Tuple[list, list]:
-    """"Analyze stanzas and find similar ones
+    """Analyze stanzas and find similar ones
 
     :param stanzas: list of stanzas
     :return: match in pairs | group of similarities
