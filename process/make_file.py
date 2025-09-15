@@ -5,7 +5,7 @@ from fpdf import FPDF
 
 from constants import CHORD_REGEX, DEFAULT_FONT
 
-current_folder = Path(__file__).parent
+current_folder = Path(__file__).parent.parent
 
 
 def raw_pdf(text, output_filename):
@@ -41,6 +41,7 @@ def is_chord_line(line: str) -> bool:
 
 def make_pdf(song_name: str, sequence: list, id_map_stanzas: dict):
     song_name = song_name.replace("-", " ").title()
+    name_file = song_name.replace(" ", "")
 
     pdf = FPDF()
     pdf.add_page()
@@ -77,6 +78,6 @@ def make_pdf(song_name: str, sequence: list, id_map_stanzas: dict):
                 pdf.set_x(20)
                 pdf.cell(0, 5, line, ln=1)
 
-    path_to_save = str(current_folder / "pdf_files" / f"{song_name}-teste0.pdf")
+    path_to_save = str(current_folder / "pdf_files" / f"{name_file}.pdf")
     pdf.output(path_to_save)
     return True

@@ -1,17 +1,15 @@
 from bs4 import BeautifulSoup, Tag
 
+from process.make_file import is_chord_line
+
 
 def organize_song_lyrics(*lyrics_map) -> list[list]:
-    """
-    Filters a lyric's song into a structured list of stanzas.
+    """Filters a lyric's song into a structured list of stanzas.
     - Enclosed text in square brackets ([ ]) triggers a stanza break.
     - Empty lines are preserved as stanza separators.
 
-    Args:
-        lyrics_map: tuple of each line
-
-    Returns:
-        List of lists, where each sublist represents a stanza.
+    :param lyrics_map: tuple of each line
+    :return: List of lists, which each sublist represents a stanza.
     """
     combined_stanzas = []
     current_stanza = []
@@ -19,26 +17,26 @@ def organize_song_lyrics(*lyrics_map) -> list[list]:
 
     for lyrics in lyrics_map:
         for index, line in enumerate(lyrics):
-            line = line.rstrip()
             stripped_line = line.strip()
 
-            # Check for stanza break (square brackets) or empty line
-            if (stripped_line.startswith('[') and stripped_line.endswith(']')) or not stripped_line:
-                if current_stanza:  # Flush current stanza if not empty
-                    # finish stanza
+            if stripped_line and stripped_line[0] == '[' and stripped_line[-1] == ']':  # search for tags
+                combined_stanzas.append([line.rstrip()])
+                continue
+
+            # Check for stanza break or empty line
+            elif not stripped_line:
+                if analyze_if_ignore_blank_line(lyrics[index - 1], lyrics[index + 1]):
+                    continue
+                if current_stanza:
                     combined_stanzas.append(current_stanza)
                     current_stanza = []
-                elif not stripped_line:
-                    continue
-
-                else:  # Add the bracket line as its own stanza
-                    combined_stanzas.append([line])
+            elif "|" in stripped_line:  # sometimes a line from tabs is not deleted
+                continue
+            else:
+                current_stanza.append(line.rstrip())
 
             # if "parte" in stripped_line.lower():   # sometimes a phrase of tabs remains in the html ("Parte 1 de 3") TODO
             #     continue
-
-            else:
-                current_stanza.append(line)
 
         # Add any remaining lines after processing all songs
         if current_stanza:
@@ -49,6 +47,11 @@ def organize_song_lyrics(*lyrics_map) -> list[list]:
 
 
 def parse_chords_and_lyrics(html: Tag) -> list:
+    """Split lines from chord
+
+    :param html: Chord tag from beautiful soup
+    :return: chord with split lines
+    """
     html = str(html)
     soup = BeautifulSoup(html, 'html.parser')
     lines = soup.get_text().splitlines()
@@ -57,17 +60,22 @@ def parse_chords_and_lyrics(html: Tag) -> list:
             if lines[index] or index == 0 or lines[index - 1]]
 
 
-def analyze_stanzas(sublists) -> list:
+def analyze_stanzas(formatted_lyrics: list) -> list:
+    """Analyzes and make a sequece of stanzas preparing to pdf
+    
+    :param formatted_lyrics: Separated lyrics
+    :return: 
+    """
     ids_stanzas = []
     current_id = 0
     id_map = {}  # To track stanza content and their IDs
 
     i: int = 0
-    while i < len(sublists):
-        sublist = sublists[i]
+    while i < len(formatted_lyrics):
+        sublist = formatted_lyrics[i]
 
         # Check if sublist should be ignored (contains [text]) | e.g. [Primeira Parte]
-        ignore = any(item.startswith('[') and item.endswith(']') for item in sublist)
+        ignore = any(item[0] == '[' and item[-1] == ']' for item in sublist)
         if ignore:
             i += 1
             continue
@@ -106,5 +114,62 @@ def analyze_stanzas(sublists) -> list:
 
     # Append the last group
     sequence_ids_stanzas.append(f"{prev}({count}x)" if count > 1 else str(prev))
+
     id_map = dict(zip(id_map.values(), id_map.keys()))  # switch keys to values
     return [sequence_ids_stanzas, id_map]
+
+
+def analyze_if_ignore_blank_line(prev_line: str, post_line: str):
+    """Analyze if a blank line corresponds to a new stanza, otherwise should be ignored
+
+    :param prev_line: previous line
+    :param post_line: posterior line
+    :return: bool
+    """
+    check_line_1 = False
+    check_line_2 = False
+
+    if not is_chord_line(prev_line) and prev_line[0] != '[':
+        check_line_1 = True
+    if not is_chord_line(post_line) and post_line[0] != '[':
+        check_line_2 = True
+
+    return check_line_1 and check_line_2
+
+
+def set_stanza_default(groups: list, lyrics: list):
+    """Set which stanza will be default to change the others that are similar
+
+    :param groups: similar stanzas
+    :param lyrics: song lyrics
+    """
+    combo: dict
+
+    for combo in groups:
+        indexes = combo['indexes']
+
+        if input("Deseja printar as opções? vazio=N : "):
+            print_similarity_combos(indexes, lyrics)
+
+        default_item = input(f"Qual estrofe será o padrão? Opções {indexes}") # TODO: grupos 1,2,4
+        if not default_item:
+            continue
+
+        # set the default stanza changing the others
+        [lyrics.__setitem__(index, lyrics[int(default_item)]) for index in combo['indexes']]
+
+
+def print_similarity_combos(indexes, lyrics: list):
+    selected_stanzas = []
+    for index in indexes:
+        selected_stanzas.append(lyrics[index])
+
+    max_lines = max(len(stanza) for stanza in selected_stanzas)
+
+    organized_lines = []
+    for line_pos in range(max_lines):
+        for stanza in selected_stanzas:
+            if line_pos < len(stanza):
+                print(f"{stanza[line_pos]}")
+
+    return organized_lines
