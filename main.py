@@ -5,7 +5,7 @@ from process.make_file import make_pdf
 from process.similarity import analyze_stanzas_similarity
 from process.stanza_scanning import analyze_repetition, change_stanzas
 
-url = input("Cole a URL aqui: ")
+url = input("URL: ")
 changes_check = input("Deseja fazer alterações de quebrar/juntar estrofes?(vazio=NAO): ")
 song_name = f"{url.split('/')[-2]}"
 
@@ -24,7 +24,7 @@ if __name__ == "__main__":
         break_check = input("Esse passo por ser útil depois da visualização do pdf...\n"
                             "Deseja quebrar alguma estrofe em partes?(vazio=NAO): ")
         while break_check:
-            change_stanzas(formatted_lyrics)
+            change_stanzas(formatted_lyrics, action='break')
             break_check = input("Continuar quebrando estrofes?(vazio=NAO): ")
 
     logger.info(f"Encontrando repetições")
@@ -39,7 +39,7 @@ if __name__ == "__main__":
         print("===================")
         join_check = input("Deseja juntar estrofes?(vazio=NAO): ")
         while join_check:
-            change_stanzas(formatted_lyrics)
+            change_stanzas(formatted_lyrics, action='join')
             join_check = input("Continuar juntando estrofes?(vazio=NAO): ")
 
     logger.info("Analisando estrofes para gerar sequência e PDF")
