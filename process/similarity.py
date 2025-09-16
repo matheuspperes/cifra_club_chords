@@ -10,7 +10,7 @@ def calculate_similarity(stanza1: list, stanza2: list) -> float:
     :return: similarity percentage
     """
     if not stanza1 or not stanza2:
-        return 0.0
+        return 0
 
     # Convert stanzas to strings for comparison
     str1 = ' '.join(stanza1).lower()
@@ -30,10 +30,10 @@ def analyze_stanzas_similarity(stanzas: list) -> Tuple[list, list]:
 
     # Compare each pair of stanzas
     for i, stanza1 in enumerate(stanzas):
-        if stanza1[0][0] in ("[", "("):
+        if stanza1[0][0] == "(":
             continue
         for j, stanza2 in enumerate(stanzas[i + 1:], i + 1):
-            if stanza2[0][0] in ("[", "("):
+            if stanza2[0][0] == "(":
                 continue
             similarity = calculate_similarity(stanza1, stanza2)
 
