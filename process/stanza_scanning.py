@@ -61,10 +61,11 @@ def identify_repetition_inside_stanza(stanza: list[str]) -> list | tuple:
     return result
 
 
-def break_stanzas(formatted_lyrics: list) -> None:
-    """Breaks stanzas in a specific line
+def change_stanzas(formatted_lyrics: list, action=None) -> None:
+    """Breaks stanzas in a specific line or join stanzas according to action
 
     :param formatted_lyrics:
+    :param action: break or join
     """
     logger.info(f"Existem {len(formatted_lyrics)} estrofes")
     print("Aqui estao o começo delas:")
@@ -78,14 +79,28 @@ def break_stanzas(formatted_lyrics: list) -> None:
         print(f"Estrofe {index} - {stanza[:length]}")
 
     print("===================")
-    stanza_index = int(input("Qual estrofe deseja alterar?: "))
-    for index, line in enumerate(formatted_lyrics[stanza_index]):
-        print(f"Linha {index}: {line}")
 
-    line_index = int(input("Em qual linha deseja começar uma nova estrofe?: "))
+    if action == 'break':
+        stanza_index = int(input("Qual estrofe deseja alterar?: "))
+        for index, line in enumerate(formatted_lyrics[stanza_index]):
+            print(f"Linha {index}: {line}")
 
-    second_stanza = formatted_lyrics[stanza_index][line_index:]
+        line_index = int(input("Em qual linha deseja começar uma nova estrofe?: "))
 
-    formatted_lyrics[stanza_index] = formatted_lyrics[stanza_index][:line_index]
-    formatted_lyrics.insert(stanza_index + 1, second_stanza)
+        second_stanza = formatted_lyrics[stanza_index][line_index:]
+
+        formatted_lyrics[stanza_index] = formatted_lyrics[stanza_index][:line_index]
+        formatted_lyrics.insert(stanza_index + 1, second_stanza)
+        return
+
+    list_stanza_index = list(map(int, input("Quais estrofes seguidas deseja juntar? Padrão de resposta= 3 4: ").split(" ")))
+
+    merged_item = []
+    for index in list_stanza_index:
+        merged_item.extend(formatted_lyrics[index])
+
+    formatted_lyrics[list_stanza_index[0]] = merged_item
+
+    for index in sorted(list_stanza_index[1:], reverse=True): # reverse order to avoid index shifting
+        del formatted_lyrics[index]
     return
