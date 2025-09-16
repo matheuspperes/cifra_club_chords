@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup, Tag
 
+from logger import logger
 from process.make_file import is_chord_line
 
 
@@ -19,8 +20,8 @@ def organize_song_lyrics(*lyrics_map) -> list[list]:
         for index, line in enumerate(lyrics):
             stripped_line = line.strip()
 
-            if stripped_line and stripped_line[0] == '[' and stripped_line[-1] == ']':  # search for tags
-                combined_stanzas.append([line.rstrip()])
+            if (stripped_line and stripped_line[0] == '[' and stripped_line[-1] == ']'
+                    or "|" in stripped_line):  # search for tags # sometimes a line from tabs is not deleted
                 continue
 
             # Check for stanza break or empty line
@@ -30,8 +31,7 @@ def organize_song_lyrics(*lyrics_map) -> list[list]:
                 if current_stanza:
                     combined_stanzas.append(current_stanza)
                     current_stanza = []
-            elif "|" in stripped_line:  # sometimes a line from tabs is not deleted
-                continue
+
             else:
                 current_stanza.append(line.rstrip())
 
@@ -148,10 +148,12 @@ def set_stanza_default(groups: list, lyrics: list):
     for combo in groups:
         indexes = combo['indexes']
 
-        if input("Deseja printar as opções? vazio=N : "):
+        if input("Deseja printar as estrofes parecidas? (vazio=Nao) :\n"):
             print_similarity_combos(indexes, lyrics)
 
-        default_item = input(f"Qual estrofe será o padrão? Opções {indexes}") # TODO: grupos 1,2,4
+        logger.info(f"Qual estrofe será o padrão? (vazio=Manter) Opções {indexes}:")  # TODO: grupos 1,2,4
+        default_item = input().strip()
+        logger.info(f"Padrão escolhido: {default_item}\n\n")
         if not default_item:
             continue
 
