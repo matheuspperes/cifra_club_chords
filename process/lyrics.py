@@ -64,7 +64,7 @@ def analyze_stanzas(formatted_lyrics: list) -> list:
     """Analyzes and make a sequece of stanzas preparing to pdf
     
     :param formatted_lyrics: Separated lyrics
-    :return: 
+    :return: sequence of song and stanzas organized
     """
     ids_stanzas = []
     current_id = 0
@@ -129,9 +129,9 @@ def analyze_if_ignore_blank_line(prev_line: str, post_line: str):
     check_line_1 = False
     check_line_2 = False
 
-    if not is_chord_line(prev_line) and prev_line[0] != '[':
+    if prev_line and not is_chord_line(prev_line) and prev_line[0] != '[':
         check_line_1 = True
-    if not is_chord_line(post_line) and post_line[0] != '[':
+    if post_line and not is_chord_line(post_line) and post_line[0] != '[':
         check_line_2 = True
 
     return check_line_1 and check_line_2
@@ -148,20 +148,29 @@ def set_stanza_default(groups: list, lyrics: list):
     for combo in groups:
         indexes = combo['indexes']
 
-        if input("Deseja printar as estrofes parecidas? (vazio=Nao) :\n"):
+        if input("Deseja printar as estrofes parecidas? (vazio=Nao) : "):
             print_similarity_combos(indexes, lyrics)
 
-        logger.info(f"Qual estrofe será o padrão? (vazio=Manter) Opções {indexes}:")  # TODO: grupos 1,2,4
+        logger.info(f"Qual estrofe será o padrão? \n"
+                    f"(vazio=Manter) Opções {indexes}: ")  # TODO: *caso tenha mais de 1 - Padrão= 14 15
         default_item = input().strip()
         logger.info(f"Padrão escolhido: {default_item}\n\n")
+
         if not default_item:
             continue
+        default_item = default_item.split(" ")
 
         # set the default stanza changing the others
-        [lyrics.__setitem__(index, lyrics[int(default_item)]) for index in combo['indexes']]
+        [lyrics.__setitem__(index, lyrics[int(default_item[0])]) for index in combo['indexes']]
 
 
 def print_similarity_combos(indexes, lyrics: list):
+    """Print similar stanzas
+
+    :param indexes: stanza indexes
+    :param lyrics: whole song
+    :return: similar lines together
+    """
     selected_stanzas = []
     for index in indexes:
         selected_stanzas.append(lyrics[index])
