@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup, Tag
 from requests import Response
 
 from constants import ENCODING_HTML, SELECTOR_TABS
+from process.get_driver import get_driver
 
 
 def get_url(url: str) -> Optional[Response]:
@@ -19,11 +20,16 @@ def get_url(url: str) -> Optional[Response]:
         print("Erro na tentativa de pesquisar url")
         return None
 
+def get_keys_ids(response):
+    soup = BeautifulSoup(response, "html.parser")
+    key = soup.find("a", attrs={"title":"alterar o tom"}) # TODO
+    if key:
+        original_key = key.text
+    pass
 
-def get_html_song(response: Response):
+
+def get_html_song(soup):
     try:
-        soup = BeautifulSoup(response.text, "html.parser")
-
         # remove tabs
         for tab in soup.select(SELECTOR_TABS):
             tab.decompose()
@@ -44,14 +50,42 @@ def get_html_song(response: Response):
         print("Erro na tentativa de extrair html")
         return None
 
+def get_song_key(soup) -> str:
+    key = soup.find("a", attrs={"title": "alterar o tom"})
+    if not key:
+        return ''
+    return key.get_text()
 
-def get_song_html(url: str) -> Optional[Tag]:
+def get_song_and_artist(soup):
+    song_name = soup.select_one('#js-w-content > div.g-1.g-fix.cifra > div.g-side-ad > h1').get_text(strip=True)
+    artist_name = soup.select_one('#js-w-content > div.g-1.g-fix.cifra > div.g-side-ad > h2').get_text(strip=True)
+    return f"{song_name} - {artist_name}"
+
+def get_song_html_requests(url: str) -> Optional[Tag]:
     response = get_url(url)
     if not response:
         return None
 
-    html_song = get_html_song(response)
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    html_song = get_html_song(soup)
     if not html_song:
         return None
 
     return html_song
+
+def get_song_html_selenium(url: str) -> Optional[tuple[Tag, str, str]]:
+    driver = get_driver()
+    driver.get(url)
+    page_source = driver.page_source
+
+    soup = BeautifulSoup(page_source, "html.parser")
+
+    html_song = get_html_song(soup)
+    song_artist_name = get_song_and_artist(soup)
+    song_key = get_song_key(soup)
+
+    if not html_song:
+        return None
+
+    return html_song, song_artist_name, song_key

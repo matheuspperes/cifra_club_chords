@@ -1,17 +1,18 @@
-from extraction.website import get_song_html
+from extraction.website import get_song_html_selenium
 from logger import logger
 from process.lyrics import organize_song_lyrics, parse_chords_and_lyrics, analyze_stanzas, set_stanza_default
 from process.make_file import make_pdf
 from process.similarity import analyze_stanzas_similarity
 from process.stanza_scanning import analyze_repetition, change_stanzas
 
-url = input("URL: ")
+url = input("URL da cifra no tom desejado: ")
+# TODO: key_change = input("Deseja mudar o tom?(vazio=NAO): ")
 changes_check = input("Deseja fazer alterações de quebrar/juntar estrofes?(vazio=NAO): ")
-song_name = f"{url.split('/')[-2]}"
 
 if __name__ == "__main__":
     logger.info(f"Começando processo na URL: {url}")
-    song_html = get_song_html(url)
+
+    song_html, song_artist_name, song_key = get_song_html_selenium(url)
 
     logger.info(f"Fazendo separação de linhas")
     song_lines = parse_chords_and_lyrics(song_html)
@@ -39,7 +40,7 @@ if __name__ == "__main__":
         print("===================")
         join_check = input("Deseja juntar estrofes?(vazio=NAO): ")
         while join_check:
-            change_stanzas(formatted_lyrics, action='join')
+            change_stanzas(filtered_formatted_lyrics, action='join')
             join_check = input("Continuar juntando estrofes?(vazio=NAO): ")
 
     logger.info("Analisando estrofes para gerar sequência e PDF")
@@ -47,6 +48,6 @@ if __name__ == "__main__":
     print(f"Ordem: {sequence}")
 
     logger.info("Gerando PDF")
-    make_pdf(song_name, sequence, id_map)
+    make_pdf(song_artist_name, sequence, id_map, song_key)
     # raw_pdf(song_lines, f"{song_name}.pdf")
     logger.info("Processo concluído")
