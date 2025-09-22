@@ -45,9 +45,8 @@ def is_chord_line(line: str) -> bool:
     return chord_count > 0 and chord_count / len(tokens) >= 0.5
 
 
-def make_pdf(song_name: str, sequence: list, id_map_stanzas: dict):
-    song_name = song_name.replace("-", " ").title()
-    name_file = song_name.replace(" ", "")
+def make_pdf(song_name: str, sequence: list, id_map_stanzas: dict, song_key: str):
+    name_file = song_name.replace(" ", "").replace("/", "_") + f'({song_key})' + ".pdf"
 
     pdf = FPDF()
     pdf.add_page()
@@ -85,6 +84,6 @@ def make_pdf(song_name: str, sequence: list, id_map_stanzas: dict):
                 pdf.cell(0, 5, line, ln=1)
 
     check_folder()
-    path_to_save = str(current_folder / PDF_FOLDER / f"{name_file}.pdf")
+    path_to_save = str(current_folder / PDF_FOLDER / name_file)
     pdf.output(path_to_save)
     return True

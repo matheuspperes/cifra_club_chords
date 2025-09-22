@@ -61,7 +61,7 @@ def identify_repetition_inside_stanza(stanza: list[str]) -> list | tuple:
     return result
 
 
-def change_stanzas(formatted_lyrics: list, action=None) -> None:
+def change_stanzas(formatted_lyrics: list, action=None):
     """Breaks stanzas in a specific line or join stanzas according to action
 
     :param formatted_lyrics:
@@ -103,4 +103,5 @@ def change_stanzas(formatted_lyrics: list, action=None) -> None:
 
     for index in sorted(list_stanza_index[1:], reverse=True): # reverse order to avoid index shifting
         del formatted_lyrics[index]
+
     return
